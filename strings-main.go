@@ -11,20 +11,15 @@ import (
 const redisUrl = "localhost:6379"
 
 func main() {
-	redisOptions := &redis.Options{
-		Addr: redisUrl,
-		DB:   0, // use default DB
-	}
+	rdb := newRedisConnection()
+	defer rdb.Close()
 
 	ctx := context.Background()
-
-	rdb := redis.NewClient(redisOptions)
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
 		fmt.Println("ping err:", err)
 		return
 	}
-	defer rdb.Close()
 
 	// working with redis Strings
 	//sets "reqCount:example.com" = 1 to be expired in an hour
@@ -38,16 +33,25 @@ func main() {
 	//increments value of "reqCount:example.com" by 4
 	rdb.IncrBy(ctx, "reqCount:example.com", 4)
 
-	//sets string user1 value user1@email.com
-	rdb.Set(ctx, "user1", "user1@email.com")
+	//sets string user1 value user1@email.com with no expiration
+	rdb.Set(ctx, "user1", "user1@email.com", 0)
 
-	fmt.Println(rdb.Get(ctx, "reqCount:example.com").Result())
-	fmt.Println(rdb.Get(ctx, "reqCount:google.com").Result())
+	fmt.Println(rdb.Get(ctx, "reqCount:example.com").Result()) // 6 nil
 
-	err = rdb.SAdd(ctx, "user:id:name", "user:1:John", "user:2:Jack").Err()
-	if err != nil {
-		fmt.Println("redis addd err:", err)
+	val, _ := rdb.Get(ctx, "reqCount:google.com").Val() // val = ""
+	fmt.Println("reqCount:google.com", val)
+
+	// if key doesn't exist
+	if rdb.Get(ctx, "reqCount:google.com").Err() == redis.Nil {
+		fmt.Println("reqCount:google.com key doen't exist")
 	}
-	redisValExists := rdb.SIsMember(ctx, "user:id:name", "user:1:John").Val()
-	fmt.Println(redisValExists)
+
+}
+
+func newRedisConnection() *redis.Client {
+	redisOptions := &redis.Options{
+		Addr: redisUrl,
+		DB:   0, // use default DB
+	}
+	return redis.NewClient(redisOptions)
 }
