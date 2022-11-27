@@ -27,7 +27,7 @@ func main() {
 	rdb.SRem(ctx, "userSet", "user:2:Jack", "user:4:Tim")
 
 	//cardinality
-	fmt.Println(rdb.SCard(ctx, "userSet")) // 2
+	fmt.Println(rdb.SCard(ctx, "userSet").Val()) // 2
 }
 
 func newRedisConnection() *redis.Client {
