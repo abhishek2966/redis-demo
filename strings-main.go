@@ -38,7 +38,7 @@ func main() {
 
 	fmt.Println(rdb.Get(ctx, "reqCount:example.com").Result()) // 6 nil
 
-	val, _ := rdb.Get(ctx, "reqCount:google.com").Val() // val = ""
+	val := rdb.Get(ctx, "reqCount:google.com").Val() // val = ""
 	fmt.Println("reqCount:google.com", val)
 
 	// if key doesn't exist
